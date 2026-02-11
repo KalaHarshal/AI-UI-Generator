@@ -1,38 +1,28 @@
 "use client";
 
-import { useState } from "react";
-import { Card, Button, Modal, Input, Navbar } from "@/components/ui-library";
+import { Sidebar, Navbar, Card } from "@/components/ui-library";
 
 export default function Home() {
-  const [open, setOpen] = useState(false);
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar
-        brand="AI UI Generator"
+    <div className="flex min-h-screen">
+      <Sidebar
+        title="Dashboard"
         items={[
-          { label: "Dashboard" },
+          { label: "Overview", active: true },
+          { label: "Users" },
           { label: "Settings" },
         ]}
-        actions={<Button size="sm">Login</Button>}
       />
 
-      <div className="p-10">
-        <Card title="Settings" variant="elevated">
-          <Button onClick={() => setOpen(true)}>Open Modal</Button>
-        </Card>
-      </div>
+      <div className="flex-1">
+        <Navbar brand="AI UI Generator" />
 
-      <Modal
-        isOpen={open}
-        onClose={() => setOpen(false)}
-        title="Settings"
-      >
-        <div className="flex flex-col gap-4">
-          <Input label="Username" />
-          <Input label="Email" type="email" />
+        <div className="p-8">
+          <Card title="Welcome" variant="elevated">
+            Sidebar layout working.
+          </Card>
         </div>
-      </Modal>
+      </div>
     </div>
   );
 }
