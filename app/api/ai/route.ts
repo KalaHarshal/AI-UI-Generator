@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { validatePlan } from "@/lib/validator";
 import { COMPONENT_SCHEMAS } from "@/lib/componentSchema";
+import { buildJSX } from "@/lib/jsxBuilder";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -9,6 +10,8 @@ const openai = new OpenAI({
 
 const SYSTEM_PROMPT = `
 You are a UI Planning Agent.
+
+Your job is to convert user intent into a structured JSON UI plan.
 
 STRICT RULES:
 - Output ONLY valid JSON.
@@ -19,6 +22,10 @@ STRICT RULES:
   - "components"
 - layout must be one of: "stack", "grid", "flex"
 - components must be an array.
+- Each component must include:
+  - "type"
+  - optional "props"
+  - optional "children" (array)
 
 Allowed Components:
 ${Object.keys(COMPONENT_SCHEMAS).join(", ")}
@@ -48,7 +55,15 @@ Example valid output:
 
 export async function POST(req: NextRequest) {
   try {
-    const { user } = await req.json();
+    const body = await req.json();
+    const user = body?.user;
+
+    if (!user || typeof user !== "string") {
+      return NextResponse.json(
+        { error: "Invalid user input" },
+        { status: 400 }
+      );
+    }
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -57,6 +72,7 @@ export async function POST(req: NextRequest) {
         { role: "user", content: user },
       ],
       response_format: { type: "json_object" },
+      temperature: 0.2, // 🔒 lower randomness for determinism
     });
 
     const content = completion.choices[0].message.content;
@@ -68,8 +84,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const parsed = JSON.parse(content);
+    let parsed;
 
+    try {
+      parsed = JSON.parse(content);
+    } catch {
+      return NextResponse.json(
+        {
+          error: "Model returned invalid JSON",
+          raw: content,
+        },
+        { status: 500 }
+      );
+    }
+
+    // 🔒 Validate structured plan
     const validation = validatePlan(parsed);
 
     if (!validation.valid) {
@@ -77,17 +106,25 @@ export async function POST(req: NextRequest) {
         {
           error: "Plan validation failed",
           details: validation.errors,
-          raw: parsed
+          raw: parsed,
         },
         { status: 400 }
       );
     }
 
-    return NextResponse.json({ plan: parsed });
+    // 🔥 Deterministic JSX generation
+    const code = buildJSX(parsed);
+
+    return NextResponse.json({
+      plan: parsed,
+      code,
+    });
 
   } catch (error: any) {
     return NextResponse.json(
-      { error: error.message || "Unexpected error" },
+      {
+        error: error?.message || "Unexpected server error",
+      },
       { status: 500 }
     );
   }

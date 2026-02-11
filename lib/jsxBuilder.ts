@@ -2,10 +2,19 @@ import { UIPlan, ComponentNode } from "@/types/plan";
 
 function renderComponent(node: ComponentNode, indent = 2): string {
   const space = " ".repeat(indent);
-  const nextSpace = " ".repeat(indent + 2);
 
-  const propsString = node.props
-    ? Object.entries(node.props)
+  const props = { ...node.props };
+
+  // Extract string children if present
+  let textChild: string | null = null;
+
+  if (props?.children && typeof props.children === "string") {
+    textChild = props.children;
+    delete props.children;
+  }
+
+  const propsString = props
+    ? Object.entries(props)
         .map(([key, value]) => {
           if (typeof value === "string") {
             return `${key}="${value}"`;
@@ -22,19 +31,28 @@ function renderComponent(node: ComponentNode, indent = 2): string {
         .join(" ")
     : "";
 
-  if (!node.children || node.children.length === 0) {
-    return `${space}<${node.type}${propsString ? " " + propsString : ""} />`;
+  const hasChildren =
+    (node.children && node.children.length > 0) || textChild;
+
+  if (!hasChildren) {
+    return `${space}<${node.type}${
+      propsString ? " " + propsString : ""
+    } />`;
   }
 
   const childrenString = node.children
-    .map((child) => renderComponent(child, indent + 2))
-    .join("\n");
+    ? node.children
+        .map((child) => renderComponent(child, indent + 2))
+        .join("\n")
+    : "";
 
   return `
 ${space}<${node.type}${propsString ? " " + propsString : ""}>
+${textChild ? space + "  " + textChild : ""}
 ${childrenString}
 ${space}</${node.type}>`;
 }
+
 
 export function buildJSX(plan: UIPlan): string {
   const layoutClass =
