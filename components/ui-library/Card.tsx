@@ -1,53 +1,50 @@
-import React from "react";
+import React from 'react';
 
-export type CardVariant = "default" | "bordered" | "elevated";
-export type CardPadding = "none" | "sm" | "md" | "lg";
-
-interface CardProps {
+export interface CardProps {
+  children: React.ReactNode;
   title?: string;
   subtitle?: string;
-  variant?: CardVariant;
-  padding?: CardPadding;
-  children?: React.ReactNode;
   footer?: React.ReactNode;
+  variant?: 'default' | 'bordered' | 'elevated';
+  padding?: 'none' | 'sm' | 'md' | 'lg';
+  className?: string;
 }
 
-const variantStyles: Record<CardVariant, string> = {
-  default: "bg-white",
-  bordered: "bg-white border border-gray-200",
-  elevated: "bg-white shadow-md",
-};
-
-const paddingStyles: Record<CardPadding, string> = {
-  none: "p-0",
-  sm: "p-3",
-  md: "p-5",
-  lg: "p-7",
-};
-
 export const Card: React.FC<CardProps> = ({
+  children,
   title,
   subtitle,
-  variant = "default",
-  padding = "md",
-  children,
   footer,
+  variant = 'default',
+  padding = 'md',
+  className = '',
 }) => {
+  const baseClasses = 'rounded-lg bg-white';
+  
+  const variantClasses = {
+    default: 'border border-gray-200',
+    bordered: 'border-2 border-gray-300',
+    elevated: 'shadow-lg border border-gray-100',
+  };
+  
+  const paddingClasses = {
+    none: 'p-0',
+    sm: 'p-3',
+    md: 'p-5',
+    lg: 'p-8',
+  };
+  
   return (
-    <div className={`rounded-lg ${variantStyles[variant]}`}>
+    <div className={`${baseClasses} ${variantClasses[variant]} ${paddingClasses[padding]} ${className}`}>
       {(title || subtitle) && (
-        <div className="border-b border-gray-200 px-5 py-3">
-          {title && <h3 className="text-lg font-semibold">{title}</h3>}
-          {subtitle && (
-            <p className="text-sm text-gray-500 mt-1">{subtitle}</p>
-          )}
+        <div className="mb-4">
+          {title && <h3 className="text-xl font-semibold text-gray-900">{title}</h3>}
+          {subtitle && <p className="text-sm text-gray-600 mt-1">{subtitle}</p>}
         </div>
       )}
-
-      <div className={paddingStyles[padding]}>{children}</div>
-
+      <div>{children}</div>
       {footer && (
-        <div className="border-t border-gray-200 px-5 py-3">
+        <div className="mt-4 pt-4 border-t border-gray-200">
           {footer}
         </div>
       )}
