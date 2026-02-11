@@ -67,18 +67,7 @@ export function buildJSX(plan: UIPlan): string {
     .join("\n");
 
   return `
-import {
-  Button,
-  Card,
-  Input,
-  Modal,
-  Navbar,
-  Sidebar,
-  Table,
-  Chart
-} from "@/components/ui-library";
-
-export default function GeneratedUI() {
+function GeneratedUI() {
   return (
     <div className="${layoutClass} p-6">
 ${components}
