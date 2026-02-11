@@ -1,9 +1,8 @@
-import React from 'react';
+import React from "react";
 
 export interface TableColumn {
   key: string;
   header: string;
-  width?: string;
 }
 
 export interface TableProps {
@@ -11,7 +10,6 @@ export interface TableProps {
   data: Record<string, any>[];
   striped?: boolean;
   hoverable?: boolean;
-  className?: string;
 }
 
 export const Table: React.FC<TableProps> = ({
@@ -19,30 +17,29 @@ export const Table: React.FC<TableProps> = ({
   data,
   striped = false,
   hoverable = true,
-  className = '',
 }) => {
   return (
-    <div className={`w-full overflow-x-auto ${className}`}>
-      <table className="w-full border-collapse">
-        <thead>
-          <tr className="bg-gray-100 border-b-2 border-gray-300">
+    <div className="w-full overflow-x-auto">
+      <table className="min-w-full border border-gray-200 rounded-md overflow-hidden">
+        <thead className="bg-gray-100 border-b border-gray-200">
+          <tr>
             {columns.map((column) => (
               <th
                 key={column.key}
                 className="px-4 py-3 text-left text-sm font-semibold text-gray-700"
-                style={{ width: column.width }}
               >
                 {column.header}
               </th>
             ))}
           </tr>
         </thead>
+
         <tbody>
           {data.length === 0 ? (
             <tr>
               <td
                 colSpan={columns.length}
-                className="px-4 py-8 text-center text-gray-500"
+                className="px-4 py-8 text-center text-sm text-gray-500"
               >
                 No data available
               </td>
@@ -51,13 +48,18 @@ export const Table: React.FC<TableProps> = ({
             data.map((row, rowIndex) => (
               <tr
                 key={rowIndex}
-                className={`border-b border-gray-200 ${
-                  striped && rowIndex % 2 === 1 ? 'bg-gray-50' : ''
-                } ${hoverable ? 'hover:bg-gray-100 transition-colors' : ''}`}
+                className={`
+                  border-b border-gray-200
+                  ${striped && rowIndex % 2 === 1 ? "bg-gray-50" : ""}
+                  ${hoverable ? "hover:bg-gray-100 transition-colors" : ""}
+                `}
               >
                 {columns.map((column) => (
-                  <td key={column.key} className="px-4 py-3 text-sm text-gray-900">
-                    {row[column.key] ?? '-'}
+                  <td
+                    key={column.key}
+                    className="px-4 py-3 text-sm text-gray-900"
+                  >
+                    {row[column.key] ?? "-"}
                   </td>
                 ))}
               </tr>

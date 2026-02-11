@@ -1,8 +1,19 @@
 "use client";
 
-import { Sidebar, Navbar, Card } from "@/components/ui-library";
+import { Sidebar, Navbar, Card, Table } from "@/components/ui-library";
 
 export default function Home() {
+  const columns = [
+  { key: "name", header: "Name" },
+  { key: "email", header: "Email" },
+];
+
+
+  const data = [
+    { name: "Harshal", email: "harshal@example.com" },
+    { name: "Alex", email: "alex@example.com" },
+  ];
+
   return (
     <div className="flex min-h-screen">
       <Sidebar
@@ -18,8 +29,8 @@ export default function Home() {
         <Navbar brand="AI UI Generator" />
 
         <div className="p-8">
-          <Card title="Welcome" variant="elevated">
-            Sidebar layout working.
+          <Card title="Users" variant="elevated">
+            <Table columns={columns} data={data} striped />
           </Card>
         </div>
       </div>
