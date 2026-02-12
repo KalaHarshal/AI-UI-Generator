@@ -12,7 +12,7 @@ const SCHEMA_STRING = JSON.stringify(COMPONENT_SCHEMAS, null, 2);
 
 // ==========================================
 // 1. PLANNER PROMPT
-// Strict architectural constraints + Layout Logic + Mock Data
+// Strict architectural constraints + Refusal Logic
 // ==========================================
 const PLANNER_PROMPT = `
 You are a deterministic UI Planning Agent.
@@ -39,11 +39,11 @@ ComponentNode format:
   "children"?: (ComponentNode | string)[]
 }
 
-CRITICAL RULES:
-- DO NOT invent props.
-- DO NOT use "className" or arbitrary Tailwind classes.
-- NEVER use "children" inside the "props" object.
-- If a component contains text or child components, place them directly inside the top-level "children" array.
+CRITICAL RULES (THE "GUARDRAILS"):
+- **NO ARBITRARY STYLES:** You CANNOT change colors, fonts, borders, or spacing beyond what is defined in the component "variant" or "size" props.
+- **NO "style" PROP:** Never use the "style" prop. It is strictly forbidden.
+- **NO "className" PROP:** Never use "className". It is strictly forbidden.
+- If the user asks for a specific color (e.g., "make it red"), **IGNORE THE COLOR REQUEST**. Do not try to implement it. Just return the standard component.
 
 LAYOUT & COMPOSITION STRATEGY:
 - **Root Layout:** If using a Sidebar, the root "layout" MUST be "flex".
@@ -60,13 +60,15 @@ ${SCHEMA_STRING}
 `;
 
 // 2. EXPLAINER PROMPT
+// Explains the "Why" behind the decisions.
+// ==========================================
 const EXPLAINER_PROMPT = `
 You are a UI/UX Expert. 
 You have generated a UI plan based on a user's request.
 
 CRITICAL RULE: 
 - Explain ONLY what is explicitly present in the "Generated Plan" JSON.
-- If you used a Container to organize cards, mention it.
+- If the user requested a style change (e.g., "red background") that you ignored due to constraints, politely explain: "Custom styles are not supported by the design system, so I used the standard layout."
 - Keep it under 2 sentences. Talk like a designer.
 `;
 
@@ -126,7 +128,7 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
-      // ✅ VALIDATION: Now checks against the updated schema in lib/componentSchema.ts
+      // Validate against the schema
       const validation = validatePlan(parsed);
 
       if (validation.valid) {
@@ -137,7 +139,7 @@ export async function POST(req: NextRequest) {
         messages.push({ role: "assistant", content });
         messages.push({
           role: "user",
-          content: `Validation failed:\n- ${lastErrors.join("\n- ")}\n\nFix these errors. DO NOT use className. DO NOT invent props.`,
+          content: `Validation failed:\n- ${lastErrors.join("\n- ")}\n\nFix these errors. DO NOT use className. DO NOT use style. DO NOT invent props.`,
         });
         attempt++;
       }
