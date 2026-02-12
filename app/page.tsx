@@ -383,18 +383,19 @@ export default function Home() {
           {/* Code Editor */}
           <div className="w-full md:w-1/2 h-1/2 md:h-full border-r border-gray-200">
             <MonacoEditor
-              height="100%"
-              defaultLanguage="javascript"
-              value={code || "// Code will appear here..."}
-              theme="vs-light"
-              options={{
-                fontSize: 13,
-                minimap: { enabled: false },
-                wordWrap: "on",
-                readOnly: true,
-                padding: { top: 16 },
-              }}
-            />
+  height="100%"
+  defaultLanguage="javascript"
+  value={code || "// Code will appear here..."}
+  theme="vs-light"
+  onChange={(value) => setCode(value || "")} // ✅ 1. Update state on type
+  options={{
+    fontSize: 13,
+    minimap: { enabled: false },
+    wordWrap: "on",
+    readOnly: false, // ✅ 2. Allow editing
+    padding: { top: 16 },
+  }}
+/>
           </div>
 
           {/* Live Preview */}
