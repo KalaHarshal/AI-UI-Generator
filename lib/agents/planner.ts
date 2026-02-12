@@ -1,55 +1,32 @@
 import { UIPlan } from "@/types/plan";
-import { COMPONENT_SCHEMAS } from "@/lib/componentSchema";
 
-const SYSTEM_PROMPT = `
-You are a UI Planning Agent.
-
-Your job is to convert user intent into a structured JSON UI plan.
-
-STRICT RULES:
-- Output ONLY valid JSON.
-- Do NOT include explanations.
-- Do NOT include markdown.
-- Do NOT generate React code.
-- Only use components from the allowed list.
-- Only use props defined in the schema.
-- No inline styling.
-- No custom components.
-
-Allowed Components:
-${Object.keys(COMPONENT_SCHEMAS).join(", ")}
-
-Layout options:
-- stack
-- grid
-- flex
-
-Output format:
-
-{
-  "layout": "stack | grid | flex",
-  "components": [
-    {
-      "type": "ComponentName",
-      "props": { ... },
-      "children": [ ... ]
-    }
-  ]
-}
-`;
-
-export async function plannerAgent(
-  userInput: string
-): Promise<UIPlan> {
+// ✅ FIX: Accept previousPlan to support "Incremental Edits" [cite: 79]
+export async function generateUI(
+  userInput: string, 
+  previousPlan: UIPlan | null
+): Promise<{ plan: UIPlan; code: string; explanation: string }> {
+  
+  // We do NOT send the system prompt from the client. 
+  // The backend (api/route.ts) holds the strict "Planner" & "Explainer" prompts.
   const response = await fetch("/api/ai", {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      system: SYSTEM_PROMPT,
       user: userInput,
+      previousPlan: previousPlan, // ✅ Critical for iteration
     }),
   });
 
   const data = await response.json();
 
-  return data.plan as UIPlan;
+  if (data.error) {
+    throw new Error(data.error);
+  }
+
+  // Returns the full artifact set required by the assignment
+  return {
+    plan: data.plan,
+    code: data.code,
+    explanation: data.explanation,
+  };
 }

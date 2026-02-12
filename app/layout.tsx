@@ -1,19 +1,23 @@
+import type { Metadata } from "next";
+import { Inter } from "next/font/google"; // ✅ Added for professional typography
 import "./globals.css";
-import React from "react";
 
-export const metadata = {
-  title: "AI UI Generator",
+const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "AI-UI Generator",
   description: "Deterministic AI Agent → UI Generator",
 };
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
     <html lang="en">
-      <body className="bg-gray-50 text-gray-900">
+      {/* Applied Inter font + consistent background color */}
+      <body className={`${inter.className} bg-gray-50 text-gray-900`}>
         {children}
       </body>
     </html>

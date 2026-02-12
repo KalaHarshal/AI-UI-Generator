@@ -6,6 +6,10 @@ export interface ValidationResult {
   errors: string[];
 }
 
+// ✅ FIX 1: Remove "className" to strictly enforce the assignment's "Prohibited" list.
+// The AI must use specific 'variant' props, not arbitrary CSS.
+const GLOBAL_ALLOWED_PROPS: string[] = []; 
+
 export function validatePlan(plan: UIPlan): ValidationResult {
   const errors: string[] = [];
 
@@ -26,11 +30,17 @@ export function validatePlan(plan: UIPlan): ValidationResult {
     errors,
   };
 }
+
 function validateComponent(
-  component: ComponentNode,
+  component: ComponentNode | string, // Allow string type here for recursion safety
   path: string,
   errors: string[]
 ) {
+  // ✅ FIX 2: Safely ignore text nodes (strings)
+  if (typeof component === "string") {
+    return;
+  }
+
   if (!component.type) {
     errors.push(`${path}: Missing component type`);
     return;
@@ -49,7 +59,11 @@ function validateComponent(
 
   if (component.props) {
     Object.keys(component.props).forEach((propKey) => {
-      if (!(propKey in schema.props)) {
+      // Check against specific schema (Global props are now empty/strict)
+      if (
+        !(propKey in schema.props) &&
+        !GLOBAL_ALLOWED_PROPS.includes(propKey)
+      ) {
         errors.push(
           `${path}: Invalid prop "${propKey}" for ${component.type}`
         );

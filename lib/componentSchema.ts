@@ -6,7 +6,14 @@ export type ComponentType =
   | "Navbar"
   | "Sidebar"
   | "Table"
-  | "Chart";
+  | "Chart"
+  // Native HTML primitives
+  | "div"
+  | "span"
+  | "p"
+  | "h1"
+  | "h2"
+  | "h3";
 
 export interface ComponentSchema {
   name: ComponentType;
@@ -20,7 +27,7 @@ export const COMPONENT_SCHEMAS: Record<ComponentType, ComponentSchema> = {
       variant: ["primary", "secondary", "danger", "ghost"],
       size: ["sm", "md", "lg"],
       disabled: "boolean",
-      children: "string",
+      // children removed
     },
   },
 
@@ -31,8 +38,8 @@ export const COMPONENT_SCHEMAS: Record<ComponentType, ComponentSchema> = {
       subtitle: "string",
       variant: ["default", "bordered", "elevated"],
       padding: ["none", "sm", "md", "lg"],
-      children: "node",
       footer: "node",
+      // children removed
     },
   },
 
@@ -52,8 +59,8 @@ export const COMPONENT_SCHEMAS: Record<ComponentType, ComponentSchema> = {
     props: {
       title: "string",
       size: ["sm", "md", "lg", "xl"],
-      children: "node",
       footer: "node",
+      // children removed
     },
   },
 
@@ -93,5 +100,32 @@ export const COMPONENT_SCHEMAS: Record<ComponentType, ComponentSchema> = {
       data: "array",
       height: ["sm", "md", "lg"],
     },
+  },
+
+  // --- HTML PRIMITIVES ---
+  // Ensure props are empty so AI is forced to use the "children" array
+  div: {
+    name: "div",
+    props: {},
+  },
+  span: {
+    name: "span",
+    props: {},
+  },
+  p: {
+    name: "p",
+    props: {},
+  },
+  h1: {
+    name: "h1",
+    props: {},
+  },
+  h2: {
+    name: "h2",
+    props: {},
+  },
+  h3: {
+    name: "h3",
+    props: {},
   },
 };
