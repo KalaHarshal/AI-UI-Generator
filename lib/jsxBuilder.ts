@@ -88,15 +88,16 @@ export function buildJSX(plan: UIPlan): string {
       ? "flex flex-col gap-4"
       : plan.layout === "grid"
       ? "grid gap-4"
-      : "flex gap-4";
+      : "flex gap-4"; // Default for Sidebars
 
   const components = plan.components
     .map((component) => renderComponent(component, 6))
     .join("\n");
 
+  // Removed p-6 to allow full-screen sidebars.
   return `function GeneratedUI() {
   return (
-    <div className="${layoutClass} p-6">
+    <div className="${layoutClass} min-h-screen w-full bg-gray-50">
 ${components}
     </div>
   );

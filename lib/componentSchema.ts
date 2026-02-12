@@ -7,6 +7,7 @@ export type ComponentType =
   | "Sidebar"
   | "Table"
   | "Chart"
+  | "Container" // ✅ ADDED: This fixes the validation error
   // Native HTML primitives
   | "div"
   | "span"
@@ -27,7 +28,6 @@ export const COMPONENT_SCHEMAS: Record<ComponentType, ComponentSchema> = {
       variant: ["primary", "secondary", "danger", "ghost"],
       size: ["sm", "md", "lg"],
       disabled: "boolean",
-      // children removed
     },
   },
 
@@ -39,7 +39,6 @@ export const COMPONENT_SCHEMAS: Record<ComponentType, ComponentSchema> = {
       variant: ["default", "bordered", "elevated"],
       padding: ["none", "sm", "md", "lg"],
       footer: "node",
-      // children removed
     },
   },
 
@@ -60,7 +59,6 @@ export const COMPONENT_SCHEMAS: Record<ComponentType, ComponentSchema> = {
       title: "string",
       size: ["sm", "md", "lg", "xl"],
       footer: "node",
-      // children removed
     },
   },
 
@@ -102,8 +100,17 @@ export const COMPONENT_SCHEMAS: Record<ComponentType, ComponentSchema> = {
     },
   },
 
+  // ✅ ADDED CONTAINER DEFINITION
+  Container: {
+    name: "Container",
+    props: {
+      layout: ["flex", "grid"],
+      columns: [2, 3, 4], // For grid layouts
+      gap: ["sm", "md", "lg"],
+    },
+  },
+
   // --- HTML PRIMITIVES ---
-  // Ensure props are empty so AI is forced to use the "children" array
   div: {
     name: "div",
     props: {},

@@ -16,6 +16,8 @@ interface Version {
   timestamp: number;
 }
 
+type ViewMode = "code" | "split" | "preview";
+
 export default function Home() {
   const [versions, setVersions] = useState<Version[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(-1);
@@ -26,6 +28,8 @@ export default function Home() {
   const [plan, setPlan] = useState<any>(null);
   const [currentExplanation, setCurrentExplanation] = useState("");
   const [loading, setLoading] = useState(false);
+  
+  const [viewMode, setViewMode] = useState<ViewMode>("split");
 
   // Auto-scroll chat
   useEffect(() => {
@@ -77,6 +81,8 @@ export default function Home() {
         const trimmed = versions.slice(0, currentIndex + 1);
         setVersions([...trimmed, newVersion]);
         setCurrentIndex(trimmed.length);
+        
+        if (viewMode === 'code') setViewMode('split');
       }
     } catch (err: any) {
       setMessages((prev) => [...prev, `❌ Failed to connect to server: ${err.message}`]);
@@ -96,9 +102,26 @@ export default function Home() {
 
   // ==========================================
   // COMPONENT LIBRARY FOR PREVIEW
-  // Matches TypeScript components exactly
+  // ✅ ADDED: Container component for Grids/Rows
   // ==========================================
   const PREVIEW_COMPONENT_LIB = `
+    const Container = ({ layout = "flex", columns = 2, gap = "md", children }) => {
+      const base = "w-full";
+      const layouts = {
+        flex: "flex flex-col md:flex-row",
+        grid: "grid"
+      };
+      const gridCols = {
+        2: "grid-cols-1 md:grid-cols-2",
+        3: "grid-cols-1 md:grid-cols-3",
+        4: "grid-cols-1 md:grid-cols-4"
+      };
+      const gaps = { sm: "gap-2", md: "gap-4", lg: "gap-6" };
+      
+      const className = \`\${base} \${layouts[layout]} \${layout === 'grid' ? gridCols[columns] : ''} \${gaps[gap]}\`;
+      return React.createElement("div", { className }, children);
+    };
+
     const Button = ({ variant = "primary", size = "md", disabled = false, children, type = "button" }) => {
       const base = "font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2";
       const variants = {
@@ -121,7 +144,7 @@ export default function Home() {
     };
 
     const Card = ({ title, subtitle, variant = "default", padding = "md", children, footer }) => {
-      const base = "rounded-lg bg-white";
+      const base = "rounded-lg bg-white w-full"; 
       const variants = {
         default: "border border-gray-200",
         bordered: "border-2 border-gray-300",
@@ -165,11 +188,15 @@ export default function Home() {
         React.createElement("div", { className: "flex items-center gap-6" },
           brand && React.createElement("span", { className: "text-lg font-semibold" }, brand),
           React.createElement("div", { className: "flex items-center gap-4" },
-            items.map((item, i) => React.createElement("button", { 
-              key: i, 
-              onClick: item.onClick,
-              className: "text-sm hover:opacity-80 transition-opacity" 
-            }, item.label))
+            items.map((item, i) => {
+              const label = typeof item === 'string' ? item : item.label;
+              const onClick = typeof item === 'object' ? item.onClick : undefined;
+              return React.createElement("button", { 
+                key: i, 
+                onClick: onClick,
+                className: "text-sm hover:opacity-80 transition-opacity" 
+              }, label);
+            })
           )
         ),
         actions && React.createElement("div", { className: "flex items-center gap-3" }, actions)
@@ -178,17 +205,23 @@ export default function Home() {
 
     const Sidebar = ({ title, width = "md", items, footer }) => {
       const widths = { sm: "w-48", md: "w-64", lg: "w-72" };
-      return React.createElement("aside", { className: \`h-screen bg-white border-r border-gray-200 flex flex-col justify-between \${widths[width]}\` },
+      return React.createElement("aside", { className: \`flex-shrink-0 bg-white border-r border-gray-200 flex flex-col justify-between \${widths[width]} min-h-screen\` },
         React.createElement("div", {},
           title && React.createElement("div", { className: "px-5 py-4 border-b border-gray-200" },
             React.createElement("h2", { className: "text-lg font-semibold" }, title)
           ),
           React.createElement("nav", { className: "flex flex-col gap-1 p-3" },
-            items && items.map((item, i) => React.createElement("button", { 
-              key: i, 
-              onClick: item.onClick,
-              className: \`text-left px-3 py-2 rounded-md text-sm transition-colors \${item.active ? "bg-blue-100 text-blue-700" : "hover:bg-gray-100 text-gray-700"}\`
-            }, item.label))
+            items && items.map((item, i) => {
+               const label = typeof item === 'string' ? item : item.label;
+               const active = typeof item === 'object' ? item.active : false;
+               const onClick = typeof item === 'object' ? item.onClick : undefined;
+               
+               return React.createElement("button", { 
+                key: i, 
+                onClick: onClick,
+                className: \`text-left px-3 py-2 rounded-md text-sm transition-colors \${active ? "bg-blue-100 text-blue-700" : "hover:bg-gray-100 text-gray-700"}\`
+              }, label);
+            })
           )
         ),
         footer && React.createElement("div", { className: "border-t border-gray-200 p-3" }, footer)
@@ -200,17 +233,20 @@ export default function Home() {
         React.createElement("table", { className: "min-w-full border border-gray-200 rounded-md overflow-hidden" },
           React.createElement("thead", { className: "bg-gray-100 border-b border-gray-200" },
             React.createElement("tr", {},
-              columns?.map((col, i) => React.createElement("th", { 
-                key: i, 
-                className: "px-4 py-3 text-left text-sm font-semibold text-gray-700" 
-              }, col.header))
+              columns?.map((col, i) => {
+                 const header = typeof col === 'string' ? col : col.header;
+                 return React.createElement("th", { 
+                    key: i, 
+                    className: "px-4 py-3 text-left text-sm font-semibold text-gray-700" 
+                  }, header);
+              })
             )
           ),
           React.createElement("tbody", {},
             data?.length === 0 
               ? React.createElement("tr", {},
                   React.createElement("td", { 
-                    colSpan: columns?.length,
+                    colSpan: columns?.length || 1,
                     className: "px-4 py-8 text-center text-sm text-gray-500" 
                   }, "No data available")
                 )
@@ -218,10 +254,18 @@ export default function Home() {
                   key: i,
                   className: \`border-b border-gray-200 \${striped && i % 2 === 1 ? "bg-gray-50" : ""} \${hoverable ? "hover:bg-gray-100 transition-colors" : ""}\`
                 },
-                  columns?.map((col, j) => React.createElement("td", { 
-                    key: j, 
-                    className: "px-4 py-3 text-sm text-gray-900" 
-                  }, row[col.key] ?? "-"))
+                  columns?.map((col, j) => {
+                     const key = typeof col === 'string' ? col : col.key;
+                     // Case-insensitive lookup
+                     const value = row[key] ?? 
+                                   row[key?.toLowerCase()] ?? 
+                                   row[Object.keys(row).find(k => k.toLowerCase() === key?.toLowerCase())] ??
+                                   "-";
+                     return React.createElement("td", { 
+                      key: j, 
+                      className: "px-4 py-3 text-sm text-gray-900" 
+                    }, value);
+                  })
                 ))
           )
         )
@@ -241,7 +285,7 @@ export default function Home() {
         React.createElement("div", { 
           className: "absolute inset-0 bg-black bg-opacity-50 transition-opacity",
           onClick: onClose
-        }),
+        }, ""),
         React.createElement("div", { className: \`relative bg-white rounded-lg shadow-xl \${sizeClasses[size]} w-full mx-4 transform transition-all\` },
           title && React.createElement("div", { className: "flex items-center justify-between p-5 border-b border-gray-200" },
             React.createElement("h2", { className: "text-xl font-semibold text-gray-900" }, title),
@@ -262,7 +306,6 @@ export default function Home() {
         md: "h-56",
         lg: "h-72",
       };
-      
       const getHeightClass = (value) => {
         if (value <= 20) return "h-1/5";
         if (value <= 40) return "h-2/5";
@@ -271,7 +314,7 @@ export default function Home() {
         return "h-full";
       };
       
-      return React.createElement("div", { className: "bg-white border border-gray-200 rounded-lg p-5" },
+      return React.createElement("div", { className: "bg-white border border-gray-200 rounded-lg p-5 w-full" }, 
         React.createElement("div", { className: \`w-full \${heightStyles[height]} flex items-end gap-4\` },
           data?.map((point, i) => React.createElement("div", { 
             key: i, 
@@ -285,15 +328,29 @@ export default function Home() {
     };
   `;
 
+  // ✅ CSS INJECTION: Fixed padding and expansion
+  const AUTO_LAYOUT_CSS = `
+    <style>
+      /* SMART LAYOUT FIX:
+         Forces main content to expand and provides professional padding.
+      */
+      .flex > div:not([class*="w-"]) {
+        flex: 1;
+        width: 100%;
+        min-width: 0; 
+        padding: 2rem; /* ✅ Added 32px Padding */
+      }
+    </style>
+  `;
+
   return (
     <div className="flex h-screen bg-white">
       {/* ================= LEFT PANEL (CHAT) ================= */}
-      <div className="w-[350px] border-r border-gray-200 flex flex-col bg-gray-50">
+      <div className="w-[350px] border-r border-gray-200 flex flex-col bg-gray-50 flex-shrink-0">
         <div className="p-4 border-b border-gray-200 font-bold text-lg bg-white">
           AI Studio
         </div>
 
-        {/* Messages */}
         <div id="chat-box" className="flex-1 p-4 overflow-y-auto space-y-4">
           {messages.length === 0 && (
             <div className="text-center text-gray-500 text-sm mt-10">
@@ -317,7 +374,6 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Explanation Card */}
         {currentExplanation && (
           <div className="p-4 bg-yellow-50 border-t border-b border-yellow-200 text-sm text-yellow-900">
             <span className="font-bold">💡 AI Reasoning:</span>
@@ -325,7 +381,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Input */}
         <div className="p-4 bg-white border-t border-gray-200">
           <div className="flex gap-2">
             <input
@@ -356,6 +411,7 @@ export default function Home() {
               Version <span className="font-mono text-black">{currentIndex + 1}</span> /{" "}
               {versions.length}
             </div>
+            
             <div className="flex rounded-md shadow-sm">
               <button
                 onClick={() => currentIndex > 0 && rollbackTo(currentIndex - 1)}
@@ -374,33 +430,81 @@ export default function Home() {
                 Redo ▶
               </button>
             </div>
+
+            <div className="flex bg-gray-100 rounded-md p-1 ml-4">
+              <button
+                onClick={() => setViewMode("code")}
+                className={`px-3 py-1 text-xs rounded transition-colors ${
+                  viewMode === "code" ? "bg-white shadow text-black font-medium" : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                Code
+              </button>
+              <button
+                onClick={() => setViewMode("split")}
+                className={`px-3 py-1 text-xs rounded transition-colors ${
+                  viewMode === "split" ? "bg-white shadow text-black font-medium" : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                Split
+              </button>
+              <button
+                onClick={() => setViewMode("preview")}
+                className={`px-3 py-1 text-xs rounded transition-colors ${
+                  viewMode === "preview" ? "bg-white shadow text-black font-medium" : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                Preview
+              </button>
+            </div>
           </div>
           <div className="text-xs text-gray-400 font-mono">Generated by AI-Agent</div>
         </div>
 
         {/* Split View */}
-        <div className="flex-1 flex flex-col md:flex-row h-full overflow-hidden">
+        <div className="flex-1 flex flex-col md:flex-row h-full overflow-hidden relative">
+          
           {/* Code Editor */}
-          <div className="w-full md:w-1/2 h-1/2 md:h-full border-r border-gray-200">
-            <MonacoEditor
-  height="100%"
-  defaultLanguage="javascript"
-  value={code || "// Code will appear here..."}
-  theme="vs-light"
-  onChange={(value) => setCode(value || "")} // ✅ 1. Update state on type
-  options={{
-    fontSize: 13,
-    minimap: { enabled: false },
-    wordWrap: "on",
-    readOnly: false, // ✅ 2. Allow editing
-    padding: { top: 16 },
-  }}
-/>
+          <div 
+            className={`
+              transition-all duration-300 ease-in-out border-r border-gray-200 bg-white
+              ${viewMode === 'preview' ? 'w-0 overflow-hidden' : ''}
+              ${viewMode === 'code' ? 'w-full' : ''}
+              ${viewMode === 'split' ? 'w-1/2' : ''}
+              h-full
+            `}
+          >
+            <div className="h-full w-full">
+               <MonacoEditor
+                height="100%"
+                defaultLanguage="javascript"
+                value={code || "// Code will appear here..."}
+                theme="vs-light"
+                onChange={(value) => setCode(value || "")}
+                options={{
+                  fontSize: 13,
+                  minimap: { enabled: false },
+                  wordWrap: "on",
+                  readOnly: false,
+                  padding: { top: 16 },
+                }}
+              />
+            </div>
           </div>
 
           {/* Live Preview */}
-          <div className="w-full md:w-1/2 h-1/2 md:h-full bg-gray-100 p-8 relative">
-            <div className="absolute inset-4 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <div 
+            className={`
+              transition-all duration-300 ease-in-out h-full flex flex-col
+              ${viewMode === 'code' ? 'w-0 overflow-hidden' : ''}
+              ${viewMode === 'preview' ? 'w-full' : ''}
+              ${viewMode === 'split' ? 'w-1/2 bg-gray-100 p-8' : ''}
+            `}
+          >
+            <div className={`
+              w-full h-full bg-white overflow-hidden
+              ${viewMode === 'split' ? 'rounded-lg shadow-sm border border-gray-200' : ''}
+            `}>
               <iframe
                 className="w-full h-full"
                 title="Preview"
@@ -413,6 +517,7 @@ export default function Home() {
                       <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
                       <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
                       <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+                      ${AUTO_LAYOUT_CSS}
                     </head>
                     <body class="bg-white">
                       <div id="root"></div>

@@ -12,7 +12,7 @@ const SCHEMA_STRING = JSON.stringify(COMPONENT_SCHEMAS, null, 2);
 
 // ==========================================
 // 1. PLANNER PROMPT
-// Strict architectural constraints. No CSS/Tailwind allowed.
+// Strict architectural constraints + Layout Logic + Mock Data
 // ==========================================
 const PLANNER_PROMPT = `
 You are a deterministic UI Planning Agent.
@@ -41,29 +41,33 @@ ComponentNode format:
 
 CRITICAL RULES:
 - DO NOT invent props.
-- DO NOT use "className" or arbitrary Tailwind classes. You must strictly use the "variant" props defined in the schemas.
+- DO NOT use "className" or arbitrary Tailwind classes.
 - NEVER use "children" inside the "props" object.
 - If a component contains text or child components, place them directly inside the top-level "children" array.
-  Example: { "type": "Button", "children": ["Click Me"] }
-- If a prop is not listed in the schema, DO NOT use it.
+
+LAYOUT & COMPOSITION STRATEGY:
+- **Root Layout:** If using a Sidebar, the root "layout" MUST be "flex".
+- **Internal Layouts:** To place items side-by-side (like 3 stat cards), YOU MUST USE A "Container" COMPONENT with layout="grid" and columns=3.
+- Do NOT stack small cards vertically; use a Container to organize them.
+
+DATA POPULATION RULES:
+- If the user requests a Chart/Table but provides no data, YOU MUST GENERATE REALISTIC MOCK DATA.
+- Do NOT return empty arrays for data props.
+- For Tables: Ensure data keys roughly match column headers (case-insensitive).
 
 ALLOWED COMPONENT SCHEMAS (STRICT):
 ${SCHEMA_STRING}
 `;
 
 // 2. EXPLAINER PROMPT
-// Explains the "Why" behind the decisions.
-// ==========================================
 const EXPLAINER_PROMPT = `
 You are a UI/UX Expert. 
 You have generated a UI plan based on a user's request.
 
 CRITICAL RULE: 
 - Explain ONLY what is explicitly present in the "Generated Plan" JSON.
-- If the user requested a feature (e.g., specific colors, CSS, or custom components) but it is NOT in the JSON, DO NOT claim you added it.
-- Instead, focus on the layout (Stack/Grid) and the standard components you successfully used.
-
-Keep it under 2 sentences. Talk like a designer, not a developer.
+- If you used a Container to organize cards, mention it.
+- Keep it under 2 sentences. Talk like a designer.
 `;
 
 export async function POST(req: NextRequest) {
@@ -79,9 +83,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ==========================================
-    // STEP 1: THE PLANNER (Reasoning & Structure)
-    // ==========================================
     const messages: any[] = [
       { role: "system", content: PLANNER_PROMPT },
       {
@@ -98,10 +99,9 @@ export async function POST(req: NextRequest) {
     let lastErrors: string[] = [];
     let lastRawOutput = "";
 
-    // Retry Loop for Correctness (Self-Healing)
     while (attempt <= MAX_RETRIES) {
       const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini", // Fast, strictly capable model
+        model: "gpt-4o-mini",
         temperature: 0.2,
         response_format: { type: "json_object" },
         messages: messages,
@@ -126,6 +126,7 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
+      // ✅ VALIDATION: Now checks against the updated schema in lib/componentSchema.ts
       const validation = validatePlan(parsed);
 
       if (validation.valid) {
@@ -153,16 +154,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ==========================================
-    // STEP 2: THE GENERATOR (Deterministic Code)
-    // ==========================================
-    // This satisfies the "Generator" requirement deterministically without hallucination.
     const code = buildJSX(finalPlan);
 
-    // ==========================================
-    // STEP 3: THE EXPLAINER (Human Context)
-    // ==========================================
-    // This satisfies the "Explainer" requirement and avoids the "Single LLM call" trap.
     const explanationCompletion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
@@ -185,7 +178,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       plan: finalPlan,
       code,
-      explanation, // Frontend can now display this!
+      explanation,
     });
   } catch (error: any) {
     return NextResponse.json(
