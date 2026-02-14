@@ -1,130 +1,97 @@
-🧠 AI UI Generator (Deterministic Agent)
+AI UI Generator
+Deterministic Natural Language → React UI Agent
 
-A "Claude-Code" style AI agent that converts natural language intent into working, deterministic React UI code.
+A structured AI agent that converts natural language UI intent into validated, deterministic React UI code using a fixed component system.
 
-This project was built as part of the Assignment.
+Built as part of the Assignment.
 
-📸 Replace the image below with your own screenshot named preview.png
-<img width="1919" height="1039" alt="image" src="https://github.com/user-attachments/assets/bacf73ef-2ab5-415f-a2e1-272eca7d81a4" />
+Preview
+<img width="1919" height="1039" alt="image" src="https://github.com/user-attachments/assets/df36ff31-03c0-43f8-9ea5-f27323de9108" />
 
-🚀 Demo
 
-🔗 Live Demo: https://ai-ui-generator-cyan.vercel.app/
+Application:
+https://ai-ui-generator-cyan.vercel.app/
 
-🎯 Goal
+Overview
 
-The objective was to build an AI agent that generates UI deterministically.
+Traditional AI code generators often hallucinate:
 
-Unlike traditional LLM code generators that hallucinate arbitrary CSS, external libraries, or invalid props, this system is:
+Arbitrary CSS
 
-Strictly bound to a Fixed Component Library
+Unknown props
 
-Unable to invent components
+Non-existent components
 
-Unable to invent props
+External libraries
 
-Prohibited from generating arbitrary CSS
+This system eliminates that behavior.
+
+Instead of free-form generation, the agent:
+
+Plans a structured UI in JSON
+
+Validates it against a strict schema
+
+Deterministically renders JSX
+
+Explains its reasoning
 
 The output is predictable, validated, and safe.
 
-✨ Key Features
-✅ Safe & Deterministic
+Core Objective
 
-The AI selects only from a whitelisted component system
+Build an AI agent that:
 
-No arbitrary CSS
+Converts natural language → structured layout
 
-No className
+Is strictly bound to a fixed component library
 
-No style={{}}
+Prevents hallucinated props and styling
 
-No custom component creation
+Supports incremental editing
 
-🧠 Multi-Step Agent Architecture
+Produces guaranteed-valid React JSX
 
-Structured flow:
+Architecture
 
-Planner → Validator → Generator → Explainer
-
-
-Ensures correctness and prevents hallucination.
-
-🔁 Incremental Editing
-
-The agent maintains previous JSON layout state.
-
-Example:
-
-"Add a chart to that card"
-
-"Insert a table below the stats"
-
-It modifies the existing layout instead of regenerating from scratch.
-
-🖥 Live Preview + Code
-
-Split-pane interface:
-
-Chat panel
-
-Editable JSX code (Monaco Editor)
-
-Live interactive preview
-
-📊 Robust Data Handling
-
-If the user does not provide data:
-
-Charts auto-generate realistic mock data
-
-Tables auto-populate structured sample rows
-
-🛡 Guardrails
-
-If a user requests something outside constraints (e.g., "Make sidebar red"):
-
-The system politely refuses
-
-Explains why arbitrary styling is not allowed
-
-Maintains design consistency
-
-🏗️ Architecture & Agent Design
-
-Backend Entry:
+Backend entry point:
 
 app/api/ai/route.ts
 
-1️⃣ Planner (Reasoning Engine)
+
+The system follows a controlled pipeline:
+
+Planner → Validator → Generator → Explainer
+
+1. Planner (LLM – JSON Only)
 
 Model: gpt-4o-mini (JSON Mode)
 
-Input:
+Input
 
 User prompt
 
 Previous JSON layout state
 
-Output:
+Output
 
-Pure JSON UI tree
+Pure JSON layout tree
 
-Constraint:
-
-Must strictly adhere to COMPONENT_SCHEMAS
-
-Example output shape:
+Example:
 
 {
   "type": "Container",
-  "props": { "layout": "grid" },
-  "children": [...]
+  "props": {
+    "layout": "grid",
+    "columns": 3
+  },
+  "children": []
 }
 
 
-No JSX is generated here — only structured data.
+The planner never generates JSX — only structured data.
 
-2️⃣ Validator (Safety Layer)
+2. Validator (Schema Enforcement)
 
 File:
 
@@ -133,31 +100,31 @@ lib/validator.ts
 
 Responsibilities:
 
-Verify component exists in whitelist
+Ensure component exists in whitelist
 
-Validate props against schema
+Validate props against schema definitions
 
-Enforce strict type checking
+Enforce strict typing
 
-Reject hallucinated fields
+Reject unknown fields
 
-If invalid:
+Reject styling props
 
-The plan is rejected
-
-The AI is prompted to retry
-
-This prevents:
+Prevents:
 
 className
 
 style
 
-Unknown props
+Arbitrary Tailwind classes
 
 Unknown components
 
-3️⃣ Generator (Deterministic Renderer)
+Unknown props
+
+If validation fails, the planner retries.
+
+3. Generator (Deterministic Renderer)
 
 File:
 
@@ -174,43 +141,45 @@ Converts JSON → JSX string
 
 Guarantees:
 
-Syntactically valid React code
+Syntactically valid React
 
 Exact match to validated plan
 
 Zero hallucination risk
 
-4️⃣ Explainer (UX Enhancement)
+4. Explainer (Reasoning Layer)
 
 A lightweight LLM call that:
 
 Explains layout decisions
 
-Improves user understanding
+Improves transparency
+
+Justifies structural choices
 
 Example:
 
-"I used a Grid Container to align the stats side-by-side for visual clarity."
+A grid layout was used to align the stats side-by-side for better visual hierarchy.
 
-🧱 Component System
+Component System
 
-The AI operates under a strict "No-CSS" principle.
+The AI operates under a strict No-CSS Principle.
 
-It selects semantic components — not styles.
+It selects semantic components — never styles.
 
-✅ Available Components
+Available Components
 
 Sidebar
 
 Navbar
 
-Container (Grid / Flex layouts)
+Container (Grid / Flex)
 
 Card
 
-Table (Auto-mocked data)
+Table (auto-mocked data)
 
-Chart (Bar charts, auto-mocked)
+Chart (bar charts with mock data)
 
 Button
 
@@ -218,60 +187,99 @@ Input
 
 Modal
 
-❌ Prohibited
+Explicitly Prohibited
 
-className="..."
+className
 
-style={{ ... }}
-
-External libraries
-
-New component definitions
+style={{}}
 
 Inline CSS
 
 Arbitrary Tailwind classes
 
-🛠️ Technical Stack
+External UI libraries
+
+New component definitions
+
+If a user requests:
+
+Change the sidebar background to red
+
+
+The system politely refuses.
+
+Key Capabilities
+Deterministic Generation
+
+All output strictly conforms to schema.
+
+Incremental Editing
+
+Maintains previous JSON state.
+
+Examples:
+
+Add a chart below the stats
+Insert a table inside that card
+Add a modal with a form
+
+
+Only relevant parts of the layout are modified.
+
+Automatic Mock Data
+
+If no data is provided:
+
+Tables generate structured sample rows
+
+Charts generate realistic metrics
+
+Live Development Interface
+
+Chat panel
+
+Monaco code editor
+
+Real-time React preview
+
+Technical Stack
 Frontend
 
 Next.js 14 (App Router)
 
 React
 
-Tailwind CSS (App shell only)
+Tailwind CSS (application shell only)
 
 Editor
 
-Monaco Editor (@monaco-editor/react)
+Monaco Editor
 
 AI
 
 OpenAI API
 
-gpt-4o-mini with JSON mode
+gpt-4o-mini (JSON mode)
 
 Validation
 
 Custom schema validation logic
 
-🚀 Getting Started
-1️⃣ Clone the Repository
-git clone https://github.com/yourusername/ai-ui-generator.git
-cd ai-ui-generator
+Local Development
+1. Clone
+git clone https://github.com/KalaHarshal/AI-UI-Generator.git
+cd AI-UI-Generator
 
-2️⃣ Install Dependencies
+2. Install
 npm install
-# or
-yarn install
 
-3️⃣ Environment Setup
+3. Environment Variables
 
-Create a .env.local file in the root directory:
+Create .env.local:
 
-OPENAI_API_KEY=sk-your-api-key-here
+OPENAI_API_KEY=sk-your-key-here
 
-4️⃣ Run the Application
+4. Run
 npm run dev
 
 
@@ -279,65 +287,60 @@ Open:
 
 http://localhost:3000
 
-🧪 Testing the Agent
+Example Prompts
+Complex Layout
+Create a dashboard with a sidebar, a navbar, and three stat cards in a grid.
 
-Try these prompts:
+Incremental Editing
+Add a chart below the stats.
 
-🧩 Complex Layout
-Create a dashboard with a sidebar, a title, and a 3-column stats area.
+Mock Data
+Add a recent activity table.
 
-📊 Mock Data Generation
-Add a Recent Activity table below the stats.
-
-
-Observe auto-populated table data.
-
-🛡 Safety Guardrail
-Change the background of the sidebar to red.
+Guardrail Test
+Change the sidebar background to red.
 
 
-Observe graceful refusal.
+Expected behavior: graceful refusal.
 
-⚠️ Known Limitations
+Known Limitations
 
-Limited component library (~10 components)
+Limited component library
 
-Mostly presentation/stateless components
+Mostly presentation components
 
-Sidebar optimized for desktop dashboards
+Desktop-optimized sidebar
 
-Limited design system flexibility
+No advanced form state handling
 
-🔮 Future Improvements
+No streaming responses
 
-Drag-and-drop visual builder for manual plan editing
+Future Improvements
 
-Integrate zod for stricter runtime validation
+Drag-and-drop visual plan editor
 
-Streaming responses for faster UI updates
+Zod-based runtime schema validation
 
-Expand component library (Forms, Tabs, Filters)
+Streaming planner responses
 
-Improved mobile-first layout logic
+Expanded component library
 
-📌 Why This Matters
+Improved mobile responsiveness
 
-Most AI code generators optimize for creativity.
+Design Philosophy
 
-This system optimizes for:
+This project prioritizes:
 
-Predictability
+Determinism over creativity
 
-Safety
+Structural correctness over flexibility
 
-Determinism
+Guardrails over arbitrary styling
 
-Structural correctness
-
-Production reliability
+Production reliability over visual freedom
 
 It demonstrates how AI agents can be constrained into safe, enterprise-ready UI systems.
 
-📄 License
+License
 
 MIT License
