@@ -1,346 +1,160 @@
-AI UI Generator
-Deterministic Natural Language → React UI Agent
+# AI-UI-Generator
+AI-UI-Generator is a deterministic AI agent designed to generate safe, schema-validated React UI code from natural language.
 
-A structured AI agent that converts natural language UI intent into validated, deterministic React UI code using a fixed component system.
+Converts natural language UI intent into validated React JSX using a fixed component system. Unlike traditional AI code generators, this system enforces strict schema validation and prevents hallucinated components, props, or styles.
 
-Built as part of the Assignment.
+## Preview
+<img width="1919" height="1039" alt="image" src="https://github.com/user-attachments/assets/8358ab90-4369-48b2-83a1-6dd9ce6297a6" />
+Link : https://ai-ui-generator-cyan.vercel.app/
+---
 
-Preview
-<img width="1919" height="1039" alt="image" src="https://github.com/user-attachments/assets/df36ff31-03c0-43f8-9ea5-f27323de9108" />
+## Introduction
+AI-UI-Generator implements a structured:
+Planner → Validator → Generator → Explaine
 
+Instead of directly generating JSX, the AI first produces a structured JSON layout plan. This plan is validated against strict component schemas before being deterministically rendered into React code.
 
-Application:
-https://ai-ui-generator-cyan.vercel.app/
+---
 
-Overview
+## Features
 
-Traditional AI code generators often hallucinate:
+- Deterministic UI Generation (Schema-bound)
+- Planner → Validator → Generator architecture
+- Incremental Layout Editing (maintains previous JSON state)
+- Automatic Mock Data for Tables and Charts
+- Strict Guardrails (no `className`, no `style`, no custom components)
+- Live Code + Preview Interface
 
-Arbitrary CSS
+---
 
-Unknown props
+## Requirements
 
-Non-existent components
+Before installing AI-UI-Generator, ensure your environment meets the following:
 
-External libraries
+- **Node.js** (version 16.x or later)
+- **npm** (version 7.x or later) or **yarn**
+- **Modern Web Browser** (for UI preview)
+- **OpenAI API Key**
+- **Git** (for cloning the repository)
 
-This system eliminates that behavior.
+---
 
-Instead of free-form generation, the agent:
+## Installation
 
-Plans a structured UI in JSON
+Follow these steps to set up AI-UI-Generator locally:
 
-Validates it against a strict schema
+1. **Clone the Repository**
+   ```bash
+   git clone https://github.com/KalaHarshal/AI-UI-Generator.git
+   cd AI-UI-Generator
+   ```
 
-Deterministically renders JSX
+2. **Install Dependencies**
+   Using npm:
+   ```bash
+   npm install
+   ```
+   Or with yarn:
+   ```bash
+   yarn install
+   ```
 
-Explains its reasoning
+3. **Configure Environment Variables**
+   Create a `.env.local` file in the project root:
+   ```env
+   OPENAI_API_KEY=your_openai_api_key
+   ```
 
-The output is predictable, validated, and safe.
+4. **Start the Development Server**
+   ```bash
+   npm run dev
+   ```
+   The application will be available at `http://localhost:3000`.
 
-Core Objective
+---
 
-Build an AI agent that:
+## Usage
 
-Converts natural language → structured layout
+1. Enter a natural language prompt.  
+   Example:  
+   "Create a dashboard with a sidebar and three stat cards."
 
-Is strictly bound to a fixed component library
+2. The system:  
+   - Generates a structured JSON layout plan  
+   - Validates it against component schemas  
+   - Deterministically renders JSX  
+   - Displays live preview
 
-Prevents hallucinated props and styling
+3. Modify incrementally:  
+   Example:  
+   "Add a chart below the stats."
 
-Supports incremental editing
+---
 
-Produces guaranteed-valid React JSX
+## Environment Variables
 
-Architecture
+Required environment configuration is minimal and straightforward.
 
-Backend entry point:
+- `OPENAI_API_KEY=your_key_here`
 
-app/api/ai/route.ts
+---
 
+## System Architecture Overview
 
-The system follows a controlled pipeline:
+Below is a flowchart illustrating the high-level architecture:
 
-Planner → Validator → Generator → Explainer
+```mermaid
+flowchart TD
+    User --> Planner
+    Planner --> Validator
+    Validator --> Generator
+    Generator --> JSX
+    JSX --> Preview
+    Planner --> Explainer
+    Explainer --> User
+```
 
-1. Planner (LLM – JSON Only)
+---
 
-Model: gpt-4o-mini (JSON Mode)
+## Deterministic Guarantees
 
-Input
+- The AI cannot invent components.
+- The AI cannot invent props.
+- The AI cannot generate className or style attributes.
+- All output passes strict schema validation.
+- JSX rendering is handled by a pure function (non-LLM).
 
-User prompt
+---
 
-Previous JSON layout state
+## Design Philosophy
 
-Output
+This system prioritizes:
 
-Pure JSON layout tree
+- Determinism over creativity
+- Safety over styling flexibility
+- Structural correctness over visual freedom
+- Schema validation over raw code generation
 
-Example:
+---
 
-{
-  "type": "Container",
-  "props": {
-    "layout": "grid",
-    "columns": 3
-  },
-  "children": []
-}
+## License
 
+This project is licensed under the MIT License. You are free to use, modify, and distribute the code for personal or commercial projects, provided you include the original license and copyright notice.
 
-The planner never generates JSX — only structured data.
+---
 
-2. Validator (Schema Enforcement)
+## Contributing
 
-File:
+We welcome contributions to AI-UI-Generator! To get started:
 
-lib/validator.ts
+- Fork the repository and create a new branch for your feature or fix.
+- Ensure code adheres to the existing style and passes all linter/prettier checks.
+- Write or update tests as necessary.
+- Submit a pull request with a clear description of your changes.
 
+### Contribution Guidelines
 
-Responsibilities:
-
-Ensure component exists in whitelist
-
-Validate props against schema definitions
-
-Enforce strict typing
-
-Reject unknown fields
-
-Reject styling props
-
-Prevents:
-
-className
-
-style
-
-Arbitrary Tailwind classes
-
-Unknown components
-
-Unknown props
-
-If validation fails, the planner retries.
-
-3. Generator (Deterministic Renderer)
-
-File:
-
-lib/jsxBuilder.ts
-
-
-This step:
-
-Is NOT LLM-based
-
-Is a pure function
-
-Converts JSON → JSX string
-
-Guarantees:
-
-Syntactically valid React
-
-Exact match to validated plan
-
-Zero hallucination risk
-
-4. Explainer (Reasoning Layer)
-
-A lightweight LLM call that:
-
-Explains layout decisions
-
-Improves transparency
-
-Justifies structural choices
-
-Example:
-
-A grid layout was used to align the stats side-by-side for better visual hierarchy.
-
-Component System
-
-The AI operates under a strict No-CSS Principle.
-
-It selects semantic components — never styles.
-
-Available Components
-
-Sidebar
-
-Navbar
-
-Container (Grid / Flex)
-
-Card
-
-Table (auto-mocked data)
-
-Chart (bar charts with mock data)
-
-Button
-
-Input
-
-Modal
-
-Explicitly Prohibited
-
-className
-
-style={{}}
-
-Inline CSS
-
-Arbitrary Tailwind classes
-
-External UI libraries
-
-New component definitions
-
-If a user requests:
-
-Change the sidebar background to red
-
-
-The system politely refuses.
-
-Key Capabilities
-Deterministic Generation
-
-All output strictly conforms to schema.
-
-Incremental Editing
-
-Maintains previous JSON state.
-
-Examples:
-
-Add a chart below the stats
-Insert a table inside that card
-Add a modal with a form
-
-
-Only relevant parts of the layout are modified.
-
-Automatic Mock Data
-
-If no data is provided:
-
-Tables generate structured sample rows
-
-Charts generate realistic metrics
-
-Live Development Interface
-
-Chat panel
-
-Monaco code editor
-
-Real-time React preview
-
-Technical Stack
-Frontend
-
-Next.js 14 (App Router)
-
-React
-
-Tailwind CSS (application shell only)
-
-Editor
-
-Monaco Editor
-
-AI
-
-OpenAI API
-
-gpt-4o-mini (JSON mode)
-
-Validation
-
-Custom schema validation logic
-
-Local Development
-1. Clone
-git clone https://github.com/KalaHarshal/AI-UI-Generator.git
-cd AI-UI-Generator
-
-2. Install
-npm install
-
-3. Environment Variables
-
-Create .env.local:
-
-OPENAI_API_KEY=sk-your-key-here
-
-4. Run
-npm run dev
-
-
-Open:
-
-http://localhost:3000
-
-Example Prompts
-Complex Layout
-Create a dashboard with a sidebar, a navbar, and three stat cards in a grid.
-
-Incremental Editing
-Add a chart below the stats.
-
-Mock Data
-Add a recent activity table.
-
-Guardrail Test
-Change the sidebar background to red.
-
-
-Expected behavior: graceful refusal.
-
-Known Limitations
-
-Limited component library
-
-Mostly presentation components
-
-Desktop-optimized sidebar
-
-No advanced form state handling
-
-No streaming responses
-
-Future Improvements
-
-Drag-and-drop visual plan editor
-
-Zod-based runtime schema validation
-
-Streaming planner responses
-
-Expanded component library
-
-Improved mobile responsiveness
-
-Design Philosophy
-
-This project prioritizes:
-
-Determinism over creativity
-
-Structural correctness over flexibility
-
-Guardrails over arbitrary styling
-
-Production reliability over visual freedom
-
-It demonstrates how AI agents can be constrained into safe, enterprise-ready UI systems.
-
-License
-
-MIT License
+- Open issues for feature requests or bugs before starting large work.
+- Write clear commit messages and PR descriptions.
+- Respect the code review process—address feedback promptly.
+- Help us keep documentation up-to-date.
